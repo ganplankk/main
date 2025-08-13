@@ -4,7 +4,7 @@ import json
 import pprint
 import flight_search
 import os
-
+from textwrap import dedent
 
 response = requests.get('https://api.sheety.co/a0c96208454b309fbc37d587242e1df3/flightDeals/prices')
 sheet_data = response.json()
@@ -12,31 +12,42 @@ sheet_data = response.json()
 # pprint.pp(pprint.pp(sheet_data))
 # print(sheet_data['prices'])
 city = flight_search.FlightSearch
-cities=[item['city'] for item in sheet_data['prices']]
-print(cities)
+cities = [item['city'] for item in sheet_data['prices']]
 
-####
+envs = f'''
+DJANGO_SETTINGS_MODULE=Laftel.settings.local_dev
+AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID')}
+AWS_SECRET_ACCESS_KEY={os.getenv('AWS_SECRET_ACCESS_KEY')}
+AWS_SESSION_TOKEN={os.getenv('AWS_SESSION_TOKEN')}
+PYTHONUNBUFFERED=1
+VIRTUAL_ENV=/Users/luna/.venv/laftel_311
+'''
+
+dedent_text = dedent(envs).strip()
+print(dedent_text)
+# print(envs)
 
 
 
-# 4. Pass the data back to the main.py file, so that you can print the data from main.py
-from data_manager import DataManager
-data_manager = DataManager()
-sheet_data = data_manager.get_destination_data()
-# print(sheet_data)
-
-#  5. In main.py check if sheet_data contains any values for the "iataCode" key.
-#  If not, then the IATA Codes column is empty in the Google Sheet.
-#  In this case, pass each city name in sheet_data one-by-one
-#  to the FlightSearch class to get the corresponding IATA code
-#  for that city using the Flight Search API.
-#  You should use the code you get back to update the sheet_data dictionary.
-if sheet_data[0]["iataCode"] == "":
-    from flight_search import FlightSearch
-    flight_search = FlightSearch()
-    for row in sheet_data:
-        row["iataCode"] = flight_search.get_destination_code(row["city"])
-    print(f"sheet_data:\n {sheet_data}")
-
-    data_manager.destination_data = sheet_data
-    data_manager.update_destination_codes()
+#
+# # 4. Pass the data back to the main.py file, so that you can print the data from main.py
+# from data_manager import DataManager
+# data_manager = DataManager()
+# sheet_data = data_manager.get_destination_data()
+# # print(sheet_data)
+#
+# #  5. In main.py check if sheet_data contains any values for the "iataCode" key.
+# #  If not, then the IATA Codes column is empty in the Google Sheet.
+# #  In this case, pass each city name in sheet_data one-by-one
+# #  to the FlightSearch class to get the corresponding IATA code
+# #  for that city using the Flight Search API.
+# #  You should use the code you get back to update the sheet_data dictionary.
+# if sheet_data[0]["iataCode"] == "":
+#     from flight_search import FlightSearch
+#     flight_search = FlightSearch()
+#     for row in sheet_data:
+#         row["iataCode"] = flight_search.get_destination_code(row["city"])
+#     print(f"sheet_data:\n {sheet_data}")
+#
+#     data_manager.destination_data = sheet_data
+#     data_manager.update_destination_codes()
