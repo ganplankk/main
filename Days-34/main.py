@@ -1,0 +1,66 @@
+import requests
+import json
+from datetime import datetime, timedelta, timezone
+import jwt
+
+APP_ID = 'fc53bcd9'
+API_KEY = '4b9b4429a05cf99b40f9f8ba350748dd'
+GENDER = 'male'
+WEIGHT_KG = 83
+HEIGHT_CM = 180
+AGE = 36
+
+exercise_endpoint = "https://trackapi.nutritionix.com/v2/natural/exercise"
+exercise_text = input("Tell me which exercises you did: ")
+
+headers = {
+    "x-app-id": APP_ID,
+    "x-app-key": API_KEY,
+}
+
+parameters = {
+    "query": exercise_text,
+    "gender": GENDER,
+    "weight_kg": WEIGHT_KG,
+    "height_cm": HEIGHT_CM,
+    "age": AGE
+}
+
+sheet_endpoint = 'https://api.sheety.co/a0c96208454b309fbc37d587242e1df3/workoutsheet/workout'
+response = requests.post(exercise_endpoint, json=parameters, headers=headers)
+result = response.json()
+print(json.dumps(result, indent= 2))
+
+today_date = datetime.now().strftime("%d/%m/%Y")
+now_time = datetime.now().strftime("%X")
+now = datetime.now(timezone.utc)
+user_id = 'fifas9011@gmail.com'
+secret_key = 'ganplankkk'
+
+def create_jwt_token(uid, secret, algorithm='HS256'):
+    payload = {
+        'user_id': uid,
+        'exp': now + timedelta(hours=1)  # 1시간 후 만료
+    }
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+token = create_jwt_token(user_id, secret_key)
+print(token)
+
+token_header = {
+    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmlmYXM5MDExQGdtYWlsLmNvbSIsImV4cCI6MTc1NDgwNjI4M30.WSUSffpgXIzJQwl6TvJqylGTiok70h0RMyMWRQ3AJjg'
+}
+
+for exercise in result["exercises"]:
+    sheet_inputs = {
+        "workout": {
+            "date": today_date,
+            "time": now_time,
+            "exercise": exercise["name"].title(),
+            "duration": exercise["duration_min"],
+            "calories": exercise["nf_calories"]
+        }
+    }
+
+    sheet_response = requests.post(sheet_endpoint, json=sheet_inputs, headers=token_header)
+    print(sheet_response.text)
